@@ -41,7 +41,10 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8000
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-# `php artisan serve` (Laravel's ServeCommand wrapper) intermittently fails to reach
-# the DB from inside this container's network namespace; the plain built-in server
-# with Laravel's own front controller as router does not have that problem.
-CMD ["php", "-S", "0.0.0.0:8000", "-t", "public", "public/index.php"]
+# `php artisan serve` (Laravel's ServeCommand wrapper) intermittently fails to reach the DB
+# from inside this container's network namespace, so we run the built-in server directly.
+# `server.php` (a copy of Laravel's own serve-command router) is required rather than
+# `public/index.php` directly: passing index.php as the router runs the full framework for
+# every request, including static files under public/storage (PDF attachments, Excel
+# exports), which don't match any route and come back as 404 HTML instead of the file.
+CMD ["sh", "-c", "cd public && exec php -S 0.0.0.0:8000 ../server.php"]
