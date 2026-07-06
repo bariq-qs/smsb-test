@@ -1,0 +1,78 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: smsb-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootsecret
+      MYSQL_DATABASE: smsb_coding_test
+      MYSQL_USER: smsb_user
+      MYSQL_PASSWORD: smsb_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - smsb_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootsecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./laravel-api
+    container_name: smsb-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+    ports:
+      - "8000:8000"
+    volumes:
+      - smsb_storage:/var/www/html/storage/app/public
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  queue:
+    build:
+      context: ./laravel-api
+    container_name: smsb-queue
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "--tries=1"]
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - smsb_storage:/var/www/html/storage/app/public
+
+  vue:
+    image: node:22-alpine
+    container_name: smsb-vue
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "corepack enable && (pnpm install --frozen-lockfile || pnpm install) && ./node_modules/.bin/vite --host 0.0.0.0 --port 5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    volumes:
+      - ./vue-app:/app
+      - smsb_vue_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  smsb_mysql_data:
+  smsb_vue_node_modules:
+  smsb_storage:
