@@ -87,4 +87,11 @@ class PurchaseOrderController extends Controller
     {
         return $purchaseOrder->load('supplier:id,name');
     }
+
+    public function audits(PurchaseOrder $purchaseOrder)
+    {
+        return response()->json(
+            $purchaseOrder->audits()->with('user:id,name')->latest()->get()
+        );
+    }
 }

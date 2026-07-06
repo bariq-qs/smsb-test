@@ -23,15 +23,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('roles', RoleController::class);
 
     Route::get('/supplier-options', [SupplierController::class, 'options']);
+    Route::get('/suppliers/{supplier}/audits', [SupplierController::class, 'audits']);
     Route::apiResource('suppliers', SupplierController::class);
 
     Route::get('/product-options', [ProductController::class, 'options']);
+    Route::get('/products/{product}/audits', [ProductController::class, 'audits']);
     Route::apiResource('products', ProductController::class);
 
+    Route::get('/purchase-orders/{purchase_order}/audits', [PurchaseOrderController::class, 'audits']);
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::post('/purchase-orders/{purchase_order}/items', [PurchaseOrderItemController::class, 'store']);
     Route::put('/purchase-orders/{purchase_order}/items/{item}', [PurchaseOrderItemController::class, 'update']);
     Route::delete('/purchase-orders/{purchase_order}/items/{item}', [PurchaseOrderItemController::class, 'destroy']);
+    Route::get('/purchase-orders/{purchase_order}/items/{item}/audits', [PurchaseOrderItemController::class, 'audits']);
 
     Route::middleware('role:Administrator')->group(function () {
         Route::apiResource('users', UserController::class);

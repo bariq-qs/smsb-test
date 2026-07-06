@@ -50,6 +50,15 @@ class PurchaseOrderItemController extends Controller
         return response()->json(['message' => 'Item removed']);
     }
 
+    public function audits(PurchaseOrder $purchaseOrder, PurchaseOrderItem $item)
+    {
+        $this->assertBelongsToOrder($purchaseOrder, $item);
+
+        return response()->json(
+            $item->audits()->with('user:id,name')->latest()->get()
+        );
+    }
+
     private function assertBelongsToOrder(PurchaseOrder $purchaseOrder, PurchaseOrderItem $item): void
     {
         if ($item->purchase_order_id !== $purchaseOrder->id) {

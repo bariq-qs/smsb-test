@@ -67,4 +67,11 @@ class SupplierController extends Controller
                 ->get()
         );
     }
+
+    public function audits(Supplier $supplier)
+    {
+        return response()->json(
+            $supplier->audits()->with('user:id,name')->latest()->get()
+        );
+    }
 }

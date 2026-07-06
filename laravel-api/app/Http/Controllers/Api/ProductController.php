@@ -71,4 +71,11 @@ class ProductController extends Controller
 
         return response()->json($query->orderBy('name')->get());
     }
+
+    public function audits(Product $product)
+    {
+        return response()->json(
+            $product->audits()->with('user:id,name')->latest()->get()
+        );
+    }
 }
