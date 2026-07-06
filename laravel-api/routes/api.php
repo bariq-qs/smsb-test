@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/exports', [ExportController::class, 'store']);
     Route::get('/exports/{export}', [ExportController::class, 'show']);
 
+    Route::get('/imports/template', [ImportController::class, 'template']);
     Route::get('/imports', [ImportController::class, 'index']);
     Route::post('/imports', [ImportController::class, 'store']);
     Route::get('/imports/{import}', [ImportController::class, 'show']);

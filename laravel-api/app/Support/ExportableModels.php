@@ -12,6 +12,8 @@ use Spatie\Permission\Models\Role;
 
 class ExportableModels
 {
+    private const EXAMPLE_SUPPLIER_NAME = 'Example Supplier Ltd';
+
     /**
      * Central registry of every entity exposed to the Excel export/import feature.
      * `fields` drives the dynamic column picker on export; `import` maps a recognized
@@ -37,6 +39,12 @@ class ExportableModels
                     'phone' => fn ($value) => ['phone' => $value],
                     'is_active' => fn ($value) => ['is_active' => self::toBool($value)],
                 ],
+                'template_example' => [
+                    'name' => self::EXAMPLE_SUPPLIER_NAME,
+                    'email' => 'supplier@example.com',
+                    'phone' => '+1 555-0100',
+                    'is_active' => 'Yes',
+                ],
             ],
             'products' => [
                 'class' => Product::class,
@@ -56,6 +64,13 @@ class ExportableModels
                     'price' => fn ($value) => ['price' => (float) $value],
                     'supplier' => fn ($value) => ['supplier_id' => Supplier::where('name', $value)->value('id')],
                     'is_active' => fn ($value) => ['is_active' => self::toBool($value)],
+                ],
+                'template_example' => [
+                    'name' => 'Example Product',
+                    'sku' => 'SKU-0001',
+                    'price' => '19.99',
+                    'supplier' => self::EXAMPLE_SUPPLIER_NAME,
+                    'is_active' => 'Yes',
                 ],
             ],
             'purchase-orders' => [
@@ -78,6 +93,13 @@ class ExportableModels
                     'status' => fn ($value) => ['status' => $value ?: 'draft'],
                     'is_urgent' => fn ($value) => ['is_urgent' => self::toBool($value)],
                 ],
+                'template_example' => [
+                    'po_number' => 'PO-0001',
+                    'supplier' => self::EXAMPLE_SUPPLIER_NAME,
+                    'order_date' => now()->toDateString(),
+                    'status' => 'draft',
+                    'is_urgent' => 'No',
+                ],
             ],
             'users' => [
                 'class' => User::class,
@@ -94,6 +116,11 @@ class ExportableModels
                     'email' => fn ($value) => ['email' => $value],
                     'role' => fn ($value) => ['__role' => $value],
                 ],
+                'template_example' => [
+                    'name' => 'Jane Doe',
+                    'email' => 'jane.doe@example.com',
+                    'role' => 'Staff',
+                ],
             ],
             'roles' => [
                 'class' => Role::class,
@@ -107,6 +134,10 @@ class ExportableModels
                 'import' => [
                     'name' => fn ($value) => ['name' => $value],
                     'permissions' => fn ($value) => ['__permissions' => $value],
+                ],
+                'template_example' => [
+                    'name' => 'Inventory Manager',
+                    'permissions' => 'view products, edit products',
                 ],
             ],
             default => throw new InvalidArgumentException("Unsupported model [{$model}] for export/import."),

@@ -2,15 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\ImportTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProcessImport;
 use App\Models\Import;
 use App\Support\ExportableModels;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ImportController extends Controller
 {
+    public function template(Request $request)
+    {
+        $data = $request->validate([
+            'model' => ['required', Rule::in(ExportableModels::models())],
+        ]);
+
+        return Excel::download(
+            new ImportTemplateExport($data['model']),
+            "{$data['model']}-import-template.xlsx"
+        );
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([

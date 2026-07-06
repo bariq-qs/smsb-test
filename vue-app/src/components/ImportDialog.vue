@@ -19,10 +19,31 @@ const file = ref(null)
 const status = ref(null)
 const result = ref(null)
 const submitting = ref(false)
+const downloadingTemplate = ref(false)
 let pollTimer = null
 
 function onFileChange(event) {
   file.value = event.target.files[0] ?? null
+}
+
+async function downloadTemplate() {
+  downloadingTemplate.value = true
+  try {
+    const { data } = await api.get('/api/imports/template', {
+      params: { model: props.model },
+      responseType: 'blob',
+    })
+    const url = URL.createObjectURL(data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${props.model}-import-template.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    toast.add({ severity: 'error', summary: 'Unable to download template', life: 3000 })
+  } finally {
+    downloadingTemplate.value = false
+  }
 }
 
 async function startImport() {
@@ -94,6 +115,16 @@ watch(
       Upload an .xlsx or .csv file. Recognized columns will be matched automatically —
       unrecognized columns are ignored.
     </p>
+    <Button
+      label="Download example template"
+      icon="pi pi-download"
+      severity="secondary"
+      text
+      size="small"
+      class="mb-3 px-0!"
+      :loading="downloadingTemplate"
+      @click="downloadTemplate"
+    />
     <input
       type="file"
       accept=".xlsx,.xls,.csv"
