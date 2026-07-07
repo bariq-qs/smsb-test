@@ -20,6 +20,7 @@ const selectedFields = ref([])
 const status = ref(null)
 const downloadUrl = ref(null)
 const submitting = ref(false)
+const downloading = ref(false)
 let pollTimer = null
 
 function fieldLabel(field) {
@@ -71,6 +72,26 @@ function poll(exportId) {
   }, 1200)
 }
 
+async function downloadFile() {
+  downloading.value = true
+  try {
+    const response = await api.get(downloadUrl.value, { responseType: 'blob' })
+    const disposition = response.headers['content-disposition'] ?? ''
+    const filename = disposition.match(/filename="?([^"]+)"?/)?.[1] ?? `${props.model}-export.xlsx`
+
+    const url = URL.createObjectURL(response.data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    toast.add({ severity: 'error', summary: 'Unable to download file', life: 3000 })
+  } finally {
+    downloading.value = false
+  }
+}
+
 function close() {
   emit('update:visible', false)
 }
@@ -108,14 +129,14 @@ watch(
     <div v-if="status" class="mt-4">
       <p class="mb-1 text-sm text-slate-500 capitalize">{{ status }}…</p>
       <ProgressBar v-if="status === 'pending' || status === 'processing'" mode="indeterminate" style="height: 6px" />
-      <a
+      <Button
         v-if="downloadUrl"
-        :href="downloadUrl"
-        target="_blank"
-        class="mt-2 inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white"
-      >
-        <i class="pi pi-download" /> Download file
-      </a>
+        label="Download file"
+        icon="pi pi-download"
+        class="mt-2"
+        :loading="downloading"
+        @click="downloadFile"
+      />
     </div>
 
     <template #footer>

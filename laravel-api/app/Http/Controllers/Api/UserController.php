@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -36,7 +37,7 @@ class UserController extends Controller
             'email' => $request->validated('email'),
             'password' => bcrypt($request->validated('password')),
         ]);
-        $user->syncRoles([$request->validated('role')]);
+        $user->syncRoles([$this->resolveRole($request->validated('role'))]);
 
         return response()->json($user->load('roles:id,name'), 201);
     }
@@ -53,7 +54,7 @@ class UserController extends Controller
             'email' => $request->validated('email'),
             ...($request->filled('password') ? ['password' => bcrypt($request->validated('password'))] : []),
         ]);
-        $user->syncRoles([$request->validated('role')]);
+        $user->syncRoles([$this->resolveRole($request->validated('role'))]);
 
         return response()->json($user->load('roles:id,name'));
     }
@@ -67,5 +68,16 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User deleted']);
+    }
+
+    /**
+     * Look up the role by name explicitly, rather than passing the bare name to syncRoles(): Sanctum's
+     * auth middleware switches the app's default auth guard to "sanctum" for the rest of the request,
+     * and syncRoles()'s name-based lookup would otherwise search for a role under that guard instead of
+     * the "web" guard roles are actually seeded/created with.
+     */
+    private function resolveRole(string $name): Role
+    {
+        return Role::where('name', $name)->where('guard_name', 'web')->firstOrFail();
     }
 }

@@ -56,8 +56,17 @@ class ExportController extends Controller
     {
         return response()->json([
             ...$export->toArray(),
-            'download_url' => $export->file_path ? Storage::disk('public')->url($export->file_path) : null,
+            'download_url' => $export->file_path ? route('exports.download', $export) : null,
         ]);
+    }
+
+    public function download(Export $export)
+    {
+        if (! $export->file_path || ! Storage::disk('public')->exists($export->file_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->download($export->file_path);
     }
 
     public function index(Request $request)
